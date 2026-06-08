@@ -1,0 +1,20 @@
+{
+  "name": "victoria-s-sound-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camiitomaino1/victoria-s-sound-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/camiitomaino1/victoria-s-sound-backend/issues"
+  },
+  "homepage": "https://github.com/camiitomaino1/victoria-s-sound-backend#readme",
+  "description": ""
+}
