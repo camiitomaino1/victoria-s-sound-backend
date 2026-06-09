@@ -2,6 +2,7 @@ import express from 'express'
 import morgan from 'morgan'
 import productsRouter from './routes/products.routes.js'
 import sequelize from './db.js'
+import './models/Product.js'
 
 const app = express()
 const PORT = 3000
@@ -18,11 +19,15 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/products', productsRouter)
 
-// Test database connection and start the server
+// Connect to database, sync models and start the server
 const startServer = async () => {
   try {
     await sequelize.authenticate()
     console.log('Database connected successfully')
+
+    await sequelize.sync()
+    console.log('Models synchronized successfully')
+
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`)
     })
