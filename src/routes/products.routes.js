@@ -1,5 +1,6 @@
 import { Router } from 'express'
-import { getProducts, getProductById, createProduct, updateProduct } from '../controllers/products.controller.js'
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/products.controller.js'
+
 
 const router = Router()
 
@@ -14,5 +15,8 @@ router.post('/', createProduct)
 
 // PUT /products/:id → updates an existing product by id
 router.put('/:id', updateProduct)
+
+// DELETE /products/:id → deletes a product by id
+router.delete('/:id', deleteProduct)
 
 export default router

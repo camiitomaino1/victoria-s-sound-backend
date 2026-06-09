@@ -133,3 +133,23 @@ export const updateProduct = (req, res) => {
   // Return the updated product
   res.json(products[index])
 }
+
+// DELETE /products/:id → deletes a product by id
+export const deleteProduct = (req, res) => {
+
+  const id = parseInt(req.params.id)
+
+  // Find the index of the product in the array
+  const index = products.findIndex((p) => p.id === id)
+
+  // If index is -1, the product was not found
+  if (index === -1) {
+    return res.status(404).json({ message: 'Producto no encontrado' })
+  }
+
+  // Remove the product from the array
+  products.splice(index, 1)
+
+  // Return a confirmation message
+  res.json({ message: 'Producto eliminado correctamente' })
+}
