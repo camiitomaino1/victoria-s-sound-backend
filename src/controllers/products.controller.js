@@ -100,3 +100,36 @@ export const createProduct = (req, res) => {
   // Return 201 Created with the new product
   res.status(201).json(newProduct)
 }
+
+// PUT /products/:id → updates an existing product by id
+export const updateProduct = (req, res) => {
+
+  const id = parseInt(req.params.id)
+
+  // Find the index of the product in the array
+  const index = products.findIndex((p) => p.id === id)
+
+  // If index is -1, the product was not found
+  if (index === -1) {
+    return res.status(404).json({ message: 'Producto no encontrado' })
+  }
+
+  const { nombre, categoria, precio, descripcion } = req.body
+
+  // Validate that all required fields are present
+  if (!nombre || !categoria || !precio || !descripcion) {
+    return res.status(400).json({ message: 'nombre, categoria, precio y descripcion son obligatorios' })
+  }
+
+  // Replace the product at the found index, keeping the original id
+  products[index] = {
+    id,
+    nombre,
+    categoria,
+    precio,
+    descripcion
+  }
+
+  // Return the updated product
+  res.json(products[index])
+}
