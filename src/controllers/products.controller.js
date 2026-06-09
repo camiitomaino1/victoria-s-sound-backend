@@ -70,17 +70,22 @@ export const getProducts = async (req, res) => {
   }
 }
 
+// GET /products/:id → returns a single product by id from the database
+export const getProductById = async (req, res) => {
+  try {
+    // Search the product by its primary key
+    const product = await Product.findByPk(req.params.id)
 
-// GET /products/:id → returns a single product by id
-export const getProductById = (req, res) => {
-  const id = parseInt(req.params.id)
-  const product = products.find((p) => p.id === id)
+    // If the product does not exist, return 404
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' })
+    }
 
-  if (!product) {
-    return res.status(404).json({ message: 'Producto no encontrado' })
+    // Product found, return it
+    res.json(product)
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el producto', error })
   }
-
-  res.json(product)
 }
 
 // POST /products → creates a new product and adds it to the array
