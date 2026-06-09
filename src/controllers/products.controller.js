@@ -58,25 +58,45 @@ const products = [
   }
 ]
 
-// Returns all products
+// GET /products → returns all products
 export const getProducts = (req, res) => {
   res.json(products)
 }
 
 // GET /products/:id → returns a single product by id
 export const getProductById = (req, res) => {
-
-  // Convert the string param to a number for strict comparison
   const id = parseInt(req.params.id)
-
-  // Find the product whose id matches the param
   const product = products.find((p) => p.id === id)
 
-  // If no product was found, return 404
   if (!product) {
     return res.status(404).json({ message: 'Producto no encontrado' })
   }
 
-  // Product found, return it
   res.json(product)
+}
+
+// POST /products → creates a new product and adds it to the array
+export const createProduct = (req, res) => {
+
+  const { nombre, categoria, precio } = req.body
+
+  // Validate that all required fields are present
+  if (!nombre || !categoria || !precio) {
+    return res.status(400).json({ message: 'nombre, categoria y precio son obligatorios' })
+  }
+
+  // Generate a new id based on the current array length
+  const newProduct = {
+    id: products.length + 1,
+    nombre,
+    categoria,
+    precio,
+    descripcion: req.body.descripcion || ''
+  }
+
+  // Add the new product to the array
+  products.push(newProduct)
+
+  // Return 201 Created with the new product
+  res.status(201).json(newProduct)
 }
