@@ -136,22 +136,23 @@ export const updateProduct = async (req, res) => {
   }
 }
 
-// DELETE /products/:id → deletes a product by id
-export const deleteProduct = (req, res) => {
+// DELETE /products/:id → deletes a product from the database
+export const deleteProduct = async (req, res) => {
+  try {
+    // Search the product by its primary key
+    const product = await Product.findByPk(req.params.id)
 
-  const id = parseInt(req.params.id)
+    // If the product does not exist, return 404
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' })
+    }
 
-  // Find the index of the product in the array
-  const index = products.findIndex((p) => p.id === id)
+    // Delete the product from the database
+    await product.destroy()
 
-  // If index is -1, the product was not found
-  if (index === -1) {
-    return res.status(404).json({ message: 'Producto no encontrado' })
+    // Return a confirmation message
+    res.json({ message: 'Producto eliminado correctamente' })
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar el producto', error })
   }
-
-  // Remove the product from the array
-  products.splice(index, 1)
-
-  // Return a confirmation message
-  res.json({ message: 'Producto eliminado correctamente' })
 }
