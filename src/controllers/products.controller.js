@@ -1,3 +1,5 @@
+import Product from '../models/Product.js'
+
 // Hardcoded products array (will be replaced by database queries later)
 const products = [
   {
@@ -58,10 +60,16 @@ const products = [
   }
 ]
 
-// GET /products → returns all products
-export const getProducts = (req, res) => {
-  res.json(products)
+// GET /products → returns all products from the database
+export const getProducts = async (req, res) => {
+  try {
+    const products = await Product.findAll()
+    res.json(products)
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los productos', error })
+  }
 }
+
 
 // GET /products/:id → returns a single product by id
 export const getProductById = (req, res) => {
