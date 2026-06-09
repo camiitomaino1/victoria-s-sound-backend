@@ -108,38 +108,32 @@ export const createProduct = async (req, res) => {
   }
 }
 
+// PUT /products/:id → updates an existing product in the database
+export const updateProduct = async (req, res) => {
+  try {
+    // Search the product by its primary key
+    const product = await Product.findByPk(req.params.id)
 
-// PUT /products/:id → updates an existing product by id
-export const updateProduct = (req, res) => {
+    // If the product does not exist, return 404
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' })
+    }
 
-  const id = parseInt(req.params.id)
+    const { nombre, categoria, precio, descripcion } = req.body
 
-  // Find the index of the product in the array
-  const index = products.findIndex((p) => p.id === id)
+    // Validate that all required fields are present
+    if (!nombre || !categoria || !precio || !descripcion) {
+      return res.status(400).json({ message: 'nombre, categoria, precio y descripcion son obligatorios' })
+    }
 
-  // If index is -1, the product was not found
-  if (index === -1) {
-    return res.status(404).json({ message: 'Producto no encontrado' })
+    // Update the product fields and save to the database
+    await product.update({ nombre, categoria, precio, descripcion })
+
+    // Return the updated product
+    res.json(product)
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar el producto', error })
   }
-
-  const { nombre, categoria, precio, descripcion } = req.body
-
-  // Validate that all required fields are present
-  if (!nombre || !categoria || !precio || !descripcion) {
-    return res.status(400).json({ message: 'nombre, categoria, precio y descripcion son obligatorios' })
-  }
-
-  // Replace the product at the found index, keeping the original id
-  products[index] = {
-    id,
-    nombre,
-    categoria,
-    precio,
-    descripcion
-  }
-
-  // Return the updated product
-  res.json(products[index])
 }
 
 // DELETE /products/:id → deletes a product by id
