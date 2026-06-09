@@ -88,31 +88,26 @@ export const getProductById = async (req, res) => {
   }
 }
 
-// POST /products → creates a new product and adds it to the array
-export const createProduct = (req, res) => {
+// POST /products → creates a new product in the database
+export const createProduct = async (req, res) => {
+  try {
+    const { nombre, categoria, precio, descripcion } = req.body
 
-  const { nombre, categoria, precio } = req.body
+    // Validate that all required fields are present
+    if (!nombre || !categoria || !precio || !descripcion) {
+      return res.status(400).json({ message: 'nombre, categoria, precio y descripcion son obligatorios' })
+    }
 
-  // Validate that all required fields are present
-  if (!nombre || !categoria || !precio) {
-    return res.status(400).json({ message: 'nombre, categoria y precio son obligatorios' })
+    // Create the product in the database
+    const newProduct = await Product.create({ nombre, categoria, precio, descripcion })
+
+    // Return 201 Created with the new product
+    res.status(201).json(newProduct)
+  } catch (error) {
+    res.status(500).json({ message: 'Error al crear el producto', error })
   }
-
-  // Generate a new id based on the current array length
-  const newProduct = {
-    id: products.length + 1,
-    nombre,
-    categoria,
-    precio,
-    descripcion: req.body.descripcion || ''
-  }
-
-  // Add the new product to the array
-  products.push(newProduct)
-
-  // Return 201 Created with the new product
-  res.status(201).json(newProduct)
 }
+
 
 // PUT /products/:id → updates an existing product by id
 export const updateProduct = (req, res) => {
