@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/products.controller.js'
 
-
 const router = Router()
 
 // GET /products → returns all products
