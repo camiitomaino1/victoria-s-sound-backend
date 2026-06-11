@@ -1,11 +1,14 @@
 import express from 'express'
 import morgan from 'morgan'
+import cors from 'cors'
 import productsRouter from './routes/products.routes.js'
 import sequelize from './db.js'
 import './models/Product.js'
 
 const app = express()
 const PORT = 3000
+
+app.use(cors())
 
 // Middlewares
 app.use(express.json())
