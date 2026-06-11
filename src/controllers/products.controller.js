@@ -91,17 +91,16 @@ export const getProductById = async (req, res) => {
 // POST /products → creates a new product in the database
 export const createProduct = async (req, res) => {
   try {
-    const { nombre, categoria, precio, descripcion } = req.body
+    const { nombre, marca, categoria, precio, descripcion } = req.body
 
     // Validate that all required fields are present
-    if (!nombre || !categoria || !precio || !descripcion) {
-      return res.status(400).json({ message: 'nombre, categoria, precio y descripcion son obligatorios' })
+    if (!nombre || !marca || !categoria || !precio || !descripcion) {
+      return res.status(400).json({ message: 'nombre, marca, categoria, precio y descripcion son obligatorios' })
     }
 
     // Create the product in the database
-    const newProduct = await Product.create({ nombre, categoria, precio, descripcion })
+    const newProduct = await Product.create({ nombre, marca, categoria, precio, descripcion })
 
-    // Return 201 Created with the new product
     res.status(201).json(newProduct)
   } catch (error) {
     res.status(500).json({ message: 'Error al crear el producto', error })
@@ -111,25 +110,21 @@ export const createProduct = async (req, res) => {
 // PUT /products/:id → updates an existing product in the database
 export const updateProduct = async (req, res) => {
   try {
-    // Search the product by its primary key
     const product = await Product.findByPk(req.params.id)
 
-    // If the product does not exist, return 404
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' })
     }
 
-    const { nombre, categoria, precio, descripcion } = req.body
+    const { nombre, marca, categoria, precio, descripcion } = req.body
 
     // Validate that all required fields are present
-    if (!nombre || !categoria || !precio || !descripcion) {
-      return res.status(400).json({ message: 'nombre, categoria, precio y descripcion son obligatorios' })
+    if (!nombre || !marca || !categoria || !precio || !descripcion) {
+      return res.status(400).json({ message: 'nombre, marca, categoria, precio y descripcion son obligatorios' })
     }
 
-    // Update the product fields and save to the database
-    await product.update({ nombre, categoria, precio, descripcion })
+    await product.update({ nombre, marca, categoria, precio, descripcion })
 
-    // Return the updated product
     res.json(product)
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar el producto', error })

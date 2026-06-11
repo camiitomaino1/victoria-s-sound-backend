@@ -10,6 +10,12 @@ const Product = sequelize.define('Product', {
     allowNull: false
   },
 
+  // Product brand: required string
+  marca: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+
   // Product category: required string
   categoria: {
     type: DataTypes.STRING,
