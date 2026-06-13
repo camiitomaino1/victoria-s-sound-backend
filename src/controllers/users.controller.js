@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs'
 import User from '../models/User.js'
 
 // GET /users → returns all users from the database
@@ -25,7 +26,7 @@ export const getUserById = async (req, res) => {
   }
 }
 
-// POST /users → creates a new user in the database
+// POST /users → creates a new user with a hashed password
 export const createUser = async (req, res) => {
   try {
     const { nombre, email, password, role } = req.body
@@ -41,10 +42,20 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ message: 'El role debe ser user, admin o sysadmin' })
     }
 
-    const newUser = await User.create({ nombre, email, password, role })
-    res.status(201).json(newUser)
+    // Hash the password before storing it (10 salt rounds)
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Store the hashed password instead of the plain text password
+    const newUser = await User.create({ nombre, email, password: hashedPassword, role })
+
+    // Return the new user without the password
+    res.status(201).json({
+      id: newUser.id,
+      nombre: newUser.nombre,
+      email: newUser.email,
+      role: newUser.role
+    })
   } catch (error) {
-    // Handle unique constraint error for email
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ message: 'Ya existe un usuario con ese email' })
     }
@@ -63,21 +74,27 @@ export const updateUser = async (req, res) => {
 
     const { nombre, email, password, role } = req.body
 
-    // Validate that all required fields are present
     if (!nombre || !email || !password || !role) {
       return res.status(400).json({ message: 'nombre, email, password y role son obligatorios' })
     }
 
-    // Validate that the role is one of the allowed values
     const validRoles = ['user', 'admin', 'sysadmin']
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: 'El role debe ser user, admin o sysadmin' })
     }
 
-    await user.update({ nombre, email, password, role })
-    res.json(user)
+    // Hash the new password before updating
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    await user.update({ nombre, email, password: hashedPassword, role })
+
+    res.json({
+      id: user.id,
+      nombre: user.nombre,
+      email: user.email,
+      role: user.role
+    })
   } catch (error) {
-    // Handle unique constraint error for email
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ message: 'Ya existe un usuario con ese email' })
     }

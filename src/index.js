@@ -3,9 +3,10 @@ import morgan from 'morgan'
 import cors from 'cors'
 import sequelize from './db.js'
 import './models/Product.js'
-import './models/User.js'                              // ← nuevo
+import './models/User.js'
 import productsRouter from './routes/products.routes.js'
-import usersRouter from './routes/users.routes.js'     // ← nuevo
+import usersRouter from './routes/users.routes.js'
+import authRouter from './routes/auth.routes.js'          
 
 const app = express()
 const PORT = 3000
@@ -22,7 +23,8 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/products', productsRouter)
-app.use('/users', usersRouter)                         // ← nuevo
+app.use('/users', usersRouter)
+app.use('/auth', authRouter)                              
 
 // Connect to database, sync models and start the server
 const startServer = async () => {
