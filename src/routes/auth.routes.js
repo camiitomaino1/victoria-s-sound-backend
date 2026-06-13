@@ -1,10 +1,12 @@
 import { Router } from 'express'
-import { login } from '../controllers/auth.controller.js'
-
+import { login, register } from '../controllers/auth.controller.js'
 
 const router = Router()
 
-// POST /auth/login → authenticates a user with email and password
+// POST /auth/login → authenticates a user and returns a JWT
 router.post('/login', login)
+
+// POST /auth/register → creates a new account with role 'user'
+router.post('/register', register)
 
 export default router

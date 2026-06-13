@@ -64,3 +64,43 @@ export const login = async (req, res) => {
     });
   }
 };
+
+// POST /auth/register → creates a new account with role 'user'
+export const register = async (req, res) => {
+  try {
+    const { nombre, email, password } = req.body
+
+    // Validate that all required fields are present
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ message: 'nombre, email y password son obligatorios' })
+    }
+
+    // Check if the email is already registered
+    const existingUser = await User.findOne({ where: { email } })
+    if (existingUser) {
+      return res.status(400).json({ message: 'Ya existe una cuenta con ese email' })
+    }
+
+    // Hash the password before storing it
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Create the user with role 'user' regardless of what the client sends
+    const newUser = await User.create({
+      nombre,
+      email,
+      password: hashedPassword,
+      role: 'user'
+    })
+
+    // Return 201 with the new user data, never expose the password
+    res.status(201).json({
+      id: newUser.id,
+      nombre: newUser.nombre,
+      email: newUser.email,
+      role: newUser.role
+    })
+
+  } catch (error) {
+    res.status(500).json({ message: 'Error al registrar el usuario', error: error.message })
+  }
+}
