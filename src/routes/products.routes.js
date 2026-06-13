@@ -1,21 +1,29 @@
 import { Router } from 'express'
-import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/products.controller.js'
+import {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct
+} from '../controllers/products.controller.js'
+import { verifyToken } from '../middlewares/verifyToken.js'
+import { authorizeRoles } from '../middlewares/authorizeRoles.js'
 
 const router = Router()
 
-// GET /products → returns all products
+// GET /products → public route, no authentication required
 router.get('/', getProducts)
 
-// GET /products/:id → returns a single product by id
+// GET /products/:id → public route, no authentication required
 router.get('/:id', getProductById)
 
-// POST /products → creates a new product
-router.post('/', createProduct)
+// POST /products → only admin and sysadmin can create products
+router.post('/', verifyToken, authorizeRoles('admin', 'sysadmin'), createProduct)
 
-// PUT /products/:id → updates an existing product by id
-router.put('/:id', updateProduct)
+// PUT /products/:id → only admin and sysadmin can update products
+router.put('/:id', verifyToken, authorizeRoles('admin', 'sysadmin'), updateProduct)
 
-// DELETE /products/:id → deletes a product by id
-router.delete('/:id', deleteProduct)
+// DELETE /products/:id → only admin and sysadmin can delete products
+router.delete('/:id', verifyToken, authorizeRoles('admin', 'sysadmin'), deleteProduct)
 
 export default router
