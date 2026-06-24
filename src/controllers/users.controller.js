@@ -72,10 +72,10 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ message: 'Usuario no encontrado' })
     }
 
-    const { nombre, email, password, role } = req.body
+    const { nombre, email, role, password } = req.body
 
-    if (!nombre || !email || !password || !role) {
-      return res.status(400).json({ message: 'nombre, email, password y role son obligatorios' })
+    if (!nombre || !email || !role) {
+      return res.status(400).json({ message: 'nombre, email y role son obligatorios' })
     }
 
     const validRoles = ['user', 'admin', 'sysadmin']
@@ -83,10 +83,14 @@ export const updateUser = async (req, res) => {
       return res.status(400).json({ message: 'El role debe ser user, admin o sysadmin' })
     }
 
-    // Hash the new password before updating
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // Only hash and update the password if a new one was provided
+    const updatedFields = { nombre, email, role }
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10)
+      updatedFields.password = hashedPassword
+    }
 
-    await user.update({ nombre, email, password: hashedPassword, role })
+    await user.update(updatedFields)
 
     res.json({
       id: user.id,
