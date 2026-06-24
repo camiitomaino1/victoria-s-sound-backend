@@ -1,16 +1,29 @@
 import Order from '../models/Order.js'
+import User from '../models/User.js'
 
 // GET /orders → returns orders depending on the user role
 export const getOrders = async (req, res) => {
   try {
     let orders
 
-    // Admin and sysadmin can see all orders
+    // Admin and sysadmin can see all orders, including the buyer's data
     if (req.user.role === 'admin' || req.user.role === 'sysadmin') {
-      orders = await Order.findAll()
+      orders = await Order.findAll({
+        // Include the associated User, but only the fields we actually need
+        include: {
+          model: User,
+          attributes: ['id', 'nombre', 'email']
+        }
+      })
     } else {
       // Regular users can only see their own orders
-      orders = await Order.findAll({ where: { userId: req.user.id } })
+      orders = await Order.findAll({
+        where: { UserId: req.user.id },
+        include: {
+          model: User,
+          attributes: ['id', 'nombre', 'email']
+        }
+      })
     }
 
     res.json(orders)
@@ -22,13 +35,17 @@ export const getOrders = async (req, res) => {
 // GET /orders/:id → returns a single order by id, respecting ownership
 export const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id)
+    const order = await Order.findByPk(req.params.id, {
+      include: {
+        model: User,
+        attributes: ['id', 'nombre', 'email']
+      }
+    })
 
     if (!order) {
       return res.status(404).json({ message: 'Pedido no encontrado' })
     }
 
-    // If the user is not admin/sysadmin, they can only see their own order
     const isOwner = order.userId === req.user.id
     const isStaff = req.user.role === 'admin' || req.user.role === 'sysadmin'
 
@@ -47,17 +64,14 @@ export const createOrder = async (req, res) => {
   try {
     const { total } = req.body
 
-    // Validate that total is present
     if (!total) {
       return res.status(400).json({ message: 'total es obligatorio' })
     }
 
-    // The userId comes from the token, not from the request body
-    // This prevents a user from creating an order for someone else
     const newOrder = await Order.create({
       total,
       estado: 'pendiente',
-      userId: req.user.id
+      UserId: req.user.id
     })
 
     res.status(201).json(newOrder)
@@ -77,7 +91,6 @@ export const updateOrder = async (req, res) => {
 
     const { estado } = req.body
 
-    // Validate that the new status is one of the allowed values
     const validStates = ['pendiente', 'confirmado', 'enviado', 'entregado']
     if (!estado || !validStates.includes(estado)) {
       return res.status(400).json({ message: 'estado debe ser pendiente, confirmado, enviado o entregado' })
