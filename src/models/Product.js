@@ -34,10 +34,16 @@ const Product = sequelize.define('Product', {
     allowNull: false
   },
 
-//Product image: URL string, optional
+  // Product image URL: optional string
   imagen: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+
+  // Soft delete flag: false means the product is deactivated
+  activo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 
 })

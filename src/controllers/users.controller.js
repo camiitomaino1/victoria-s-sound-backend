@@ -1,28 +1,30 @@
 import bcrypt from 'bcryptjs'
 import User from '../models/User.js'
 
-// GET /users → returns all users from the database
+// GET /users → returns only active users
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.findAll()
+    const users = await User.findAll({
+      where: { activo: true }
+    })
     res.json(users)
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los usuarios', error })
+    res.status(500).json({ message: 'Error al obtener los usuarios', error: error.message })
   }
 }
 
-// GET /users/:id → returns a single user by id
+// GET /users/:id → returns a single active user by id
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id)
 
-    if (!user) {
+    if (!user || !user.activo) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
     }
 
     res.json(user)
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener el usuario', error })
+    res.status(500).json({ message: 'Error al obtener el usuario', error: error.message })
   }
 }
 
@@ -31,24 +33,24 @@ export const createUser = async (req, res) => {
   try {
     const { nombre, email, password, role } = req.body
 
-    // Validate that all required fields are present
     if (!nombre || !email || !password || !role) {
       return res.status(400).json({ message: 'nombre, email, password y role son obligatorios' })
     }
 
-    // Validate that the role is one of the allowed values
     const validRoles = ['user', 'admin', 'sysadmin']
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: 'El role debe ser user, admin o sysadmin' })
     }
 
-    // Hash the password before storing it (10 salt rounds)
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Store the hashed password instead of the plain text password
-    const newUser = await User.create({ nombre, email, password: hashedPassword, role })
+    const newUser = await User.create({
+      nombre,
+      email,
+      password: hashedPassword,
+      role
+    })
 
-    // Return the new user without the password
     res.status(201).json({
       id: newUser.id,
       nombre: newUser.nombre,
@@ -59,16 +61,16 @@ export const createUser = async (req, res) => {
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ message: 'Ya existe un usuario con ese email' })
     }
-    res.status(500).json({ message: 'Error al crear el usuario', error })
+    res.status(500).json({ message: 'Error al crear el usuario', error: error.message })
   }
 }
 
-// PUT /users/:id → updates an existing user by id
+// PUT /users/:id → updates an existing user, password is optional
 export const updateUser = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id)
 
-    if (!user) {
+    if (!user || !user.activo) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
     }
 
@@ -83,11 +85,10 @@ export const updateUser = async (req, res) => {
       return res.status(400).json({ message: 'El role debe ser user, admin o sysadmin' })
     }
 
-    // Only hash and update the password if a new one was provided
+    // Only update password if a new one was provided
     const updatedFields = { nombre, email, role }
     if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10)
-      updatedFields.password = hashedPassword
+      updatedFields.password = await bcrypt.hash(password, 10)
     }
 
     await user.update(updatedFields)
@@ -102,12 +103,30 @@ export const updateUser = async (req, res) => {
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ message: 'Ya existe un usuario con ese email' })
     }
-    res.status(500).json({ message: 'Error al actualizar el usuario', error })
+    res.status(500).json({ message: 'Error al actualizar el usuario', error: error.message })
   }
 }
 
-// DELETE /users/:id → deletes a user by id
+// DELETE /users/:id → soft delete: sets activo to false
 export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id)
+
+    if (!user || !user.activo) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    // Soft delete: mark as inactive instead of removing from database
+    await user.update({ activo: false })
+
+    res.json({ message: 'Usuario desactivado correctamente' })
+  } catch (error) {
+    res.status(500).json({ message: 'Error al desactivar el usuario', error: error.message })
+  }
+}
+
+// PATCH /users/:id/restore → reactivates a soft-deleted user
+export const restoreUser = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id)
 
@@ -115,9 +134,23 @@ export const deleteUser = async (req, res) => {
       return res.status(404).json({ message: 'Usuario no encontrado' })
     }
 
-    await user.destroy()
-    res.json({ message: 'Usuario eliminado correctamente' })
+    if (user.activo) {
+      return res.status(400).json({ message: 'El usuario ya está activo' })
+    }
+
+    // Restore: mark as active again
+    await user.update({ activo: true })
+
+    res.json({
+      message: 'Usuario reactivado correctamente',
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        role: user.role
+      }
+    })
   } catch (error) {
-    res.status(500).json({ message: 'Error al eliminar el usuario', error })
+    res.status(500).json({ message: 'Error al reactivar el usuario', error: error.message })
   }
 }
