@@ -12,7 +12,6 @@ export const getProducts = async (req, res) => {
   }
 }
 
-
 // GET /products/:id → returns a single active product by id
 export const getProductById = async (req, res) => {
   try {
@@ -31,7 +30,7 @@ export const getProductById = async (req, res) => {
 // POST /products → creates a new product
 export const createProduct = async (req, res) => {
   try {
-    const { nombre, marca, categoria, precio, descripcion, imagen } = req.body
+    const { nombre, marca, categoria, precio, descripcion, imagen, stock } = req.body
 
     if (!nombre || !marca || !categoria || !precio || !descripcion) {
       return res.status(400).json({ message: 'nombre, marca, categoria, precio y descripcion son obligatorios' })
@@ -43,7 +42,9 @@ export const createProduct = async (req, res) => {
       categoria,
       precio,
       descripcion,
-      imagen: imagen || null
+      imagen: imagen || null,
+      // Use provided stock or default to 0
+      stock: stock !== undefined ? stock : 0
     })
 
     res.status(201).json(newProduct)
@@ -52,7 +53,7 @@ export const createProduct = async (req, res) => {
   }
 }
 
-// PUT /products/:id → updates an existing product
+// PUT /products/:id → updates an existing product including stock
 export const updateProduct = async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id)
@@ -61,20 +62,34 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ message: 'Producto no encontrado' })
     }
 
-    const { nombre, marca, categoria, precio, descripcion, imagen } = req.body
+    const { nombre, marca, categoria, precio, descripcion, imagen, stock } = req.body
 
     if (!nombre || !marca || !categoria || !precio || !descripcion) {
       return res.status(400).json({ message: 'nombre, marca, categoria, precio y descripcion son obligatorios' })
     }
 
-    await product.update({ nombre, marca, categoria, precio, descripcion, imagen })
+    // Validate that stock is not negative
+    if (stock !== undefined && stock < 0) {
+      return res.status(400).json({ message: 'El stock no puede ser negativo' })
+    }
+
+    await product.update({
+      nombre,
+      marca,
+      categoria,
+      precio,
+      descripcion,
+      imagen: imagen || product.imagen,
+      stock: stock !== undefined ? stock : product.stock
+    })
+
     res.json(product)
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar el producto', error: error.message })
   }
 }
 
-// DELETE /products/:id → soft delete: sets activo to false instead of destroying
+// DELETE /products/:id → soft delete
 export const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id)
@@ -83,9 +98,7 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Producto no encontrado' })
     }
 
-    // Soft delete: mark as inactive instead of removing from database
     await product.update({ activo: false })
-
     res.json({ message: 'Producto desactivado correctamente' })
   } catch (error) {
     res.status(500).json({ message: 'Error al desactivar el producto', error: error.message })
@@ -105,9 +118,7 @@ export const restoreProduct = async (req, res) => {
       return res.status(400).json({ message: 'El producto ya está activo' })
     }
 
-    // Restore: mark as active again
     await product.update({ activo: true })
-
     res.json({ message: 'Producto reactivado correctamente', product })
   } catch (error) {
     res.status(500).json({ message: 'Error al reactivar el producto', error: error.message })
