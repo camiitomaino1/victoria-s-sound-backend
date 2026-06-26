@@ -5,12 +5,24 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  restoreUser
+  restoreUser,
+  getMe,
+  updateMe,
+  updateMyPassword
 } from '../controllers/users.controller.js'
 import { verifyToken } from '../middlewares/verifyToken.js'
 import { authorizeRoles } from '../middlewares/authorizeRoles.js'
 
 const router = Router()
+
+// GET /users/me → returns the authenticated user's own data
+router.get('/me', verifyToken, getMe)
+
+// PUT /users/me → updates the authenticated user's own name and email
+router.put('/me', verifyToken, updateMe)
+
+// PUT /users/me/password → changes the authenticated user's password
+router.put('/me/password', verifyToken, updateMyPassword)
 
 // GET /users → sysadmin only
 router.get('/', verifyToken, authorizeRoles('sysadmin'), getUsers)
