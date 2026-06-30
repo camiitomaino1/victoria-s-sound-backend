@@ -1,6 +1,7 @@
 import Order from '../models/Order.js'
 import User from '../models/User.js'
 import Product from '../models/Product.js'
+import OrderItem from '../models/OrderItem.js'
 
 // GET /orders → returns orders depending on the user role
 export const getOrders = async (req, res) => {
@@ -30,14 +31,20 @@ export const getOrders = async (req, res) => {
   }
 }
 
-// GET /orders/:id → returns a single order by id
+// GET /orders/:id → returns a single order with its items
 export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findByPk(req.params.id, {
-      include: {
-        model: User,
-        attributes: ['id', 'nombre', 'email']
-      }
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'nombre', 'email']
+        },
+        {
+          // Include each product line within the order
+          model: OrderItem
+        }
+      ]
     })
 
     if (!order) {
@@ -57,7 +64,7 @@ export const getOrderById = async (req, res) => {
   }
 }
 
-// POST /orders → creates a new order, verifies and discounts stock
+// POST /orders → creates a new order with its items, verifies and discounts stock
 export const createOrder = async (req, res) => {
   try {
     const { total, items } = req.body
@@ -66,10 +73,9 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'total es obligatorio' })
     }
 
-    // If items are provided, verify stock for each product before creating the order
     if (items && items.length > 0) {
 
-      // Check stock for every item in the cart
+      // Verify stock for every item before creating anything
       for (const item of items) {
         const product = await Product.findByPk(item.id)
 
@@ -86,14 +92,32 @@ export const createOrder = async (req, res) => {
         }
       }
 
-      // All stock checks passed: discount stock for each product
+      // Create the order first
+      const newOrder = await Order.create({
+        total,
+        estado: 'pendiente',
+        UserId: req.user.id
+      })
+
+      // Create one OrderItem per product and discount stock
       for (const item of items) {
         const product = await Product.findByPk(item.id)
+
+        await OrderItem.create({
+          OrderId: newOrder.id,
+          ProductId: product.id,
+          cantidad: item.quantity,
+          precioUnitario: product.precio,
+          nombreProducto: product.nombre
+        })
+
         await product.update({ stock: product.stock - item.quantity })
       }
+
+      return res.status(201).json(newOrder)
     }
 
-    // Create the order
+    // Fallback: order without items (kept for compatibility)
     const newOrder = await Order.create({
       total,
       estado: 'pendiente',
